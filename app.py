@@ -800,40 +800,7 @@ def create_student():
         db.session.rollback()
         return jsonify({"error": str(e)}), 400
 
-@app.route('/api/students/register', methods=['POST'])
-def register_student():
-    """Register a new student without token (token assigned separately)"""
-    try:
-        data = request.json
-        
-        # Validate required fields
-        required_fields = ['name', 'reg_no', 'floor', 'room_number', 'phone_number']
-        for field in required_fields:
-            if not data.get(field):
-                return jsonify({"error": f"{field} is required"}), 400
-        
-        # Check if regNo already exists
-        existing_reg = Student.query.filter_by(reg_no=data['reg_no']).first()
-        if existing_reg:
-            return jsonify({"error": "Registration number already exists"}), 400
-        
-        # Create new student WITHOUT token (will be assigned manually by staff/admin)
-        new_student = Student(
-            name=data['name'],
-            reg_no=data['reg_no'],
-            floor=int(data['floor']),
-            room_number=str(data['room_number']),
-            phone_number=str(data['phone_number']),
-            token=None  # Token will be assigned separately by staff
-        )
-        db.session.add(new_student)
-        db.session.commit()
-        
-        result = student_schema.dump(new_student)
-        return jsonify({"message": "Student registered successfully. You can now login with your token number.", "student": result}), 201
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"error": str(e)}), 400
+# Removed manual registration (register_student deleted)
 
 @app.route('/api/register/vtop', methods=['POST'])
 def register_vtop_student():
@@ -1055,31 +1022,7 @@ def get_student_by_token(token):
     student = Student.query.filter_by(token=token).first_or_404()
     return jsonify(student_schema.dump(student))
 
-@app.route('/api/students/by-regno/<regno>', methods=['GET'])
-def get_student_by_regno(regno):
-    """Get student by registration number for login"""
-    student = Student.query.filter_by(reg_no=regno).first()
-    if not student:
-        return jsonify({"error": "Registration number not found"}), 404
-    return jsonify(student_schema.dump(student))
-
-@app.route('/api/students/login', methods=['POST'])
-def api_student_login():
-    data = request.json or {}
-    reg_no = str(data.get('regNo', '')).strip()
-    room_number = str(data.get('roomNumber', '')).strip()
-
-    if not reg_no or not room_number:
-        return jsonify({"error": "regNo and roomNumber are required"}), 400
-
-    student = Student.query.filter(func.lower(Student.reg_no) == reg_no.lower()).first()
-    if not student:
-        return jsonify({"error": "Student not found"}), 404
-
-    if str(student.room_number).strip().lower() != room_number.lower():
-        return jsonify({"error": "Invalid room number for this registration number"}), 401
-
-    return jsonify(student_schema.dump(student)), 200
+# Removed manual student login (api_student_login deleted)
 
 @app.route('/api/students/<int:id>', methods=['PATCH'])
 def update_student(id):
